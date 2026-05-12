@@ -46,3 +46,20 @@ export const syncUserDeletion = inngest.createFunction(
     await user.findByIdAndDelete(id)
   }
 )
+export const syncUserCreation = inngest.createFunction(
+  { id: "sync-user-from-clerk" },
+  { event: "clerk/user.created" },
+  async ({ event, step }) => {
+    const data = event.data;
+    await step.run("create-user", async () => {
+      await db.user.create({
+        data: {
+          clerkId: data.id,
+          email: data.email_addresses[0].email_address,
+          name: `${data.first_name} ${data.last_name}`,
+          image: data.image_url,
+        },
+      });
+    });
+  }
+);
